@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Concentration Couch</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>⚡ Concentration Couch</h1>
+
+    <div class="stats-grid">
+      <div class="card productive">
+        <h2>✅ Productive</h2>
+        <p>Total: <span id="productive-total">0</span></p>
+        <p>Unique: <span id="productive-unique">0</span></p>
+      </div>
+      <div class="card distracting">
+        <h2>❌ Distracting</h2>
+        <p>Total: <span id="distracting-total">0</span></p>
+        <p>Unique: <span id="distracting-unique">0</span></p>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h2>📈 Daily Trend</h2>
+      <canvas id="trendChart"></canvas>
+    </div>
+
+    <button id="refresh">🔄 Refresh Stats</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
