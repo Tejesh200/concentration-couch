@@ -47,7 +47,10 @@ def classify_url(request: UrlRequest):
     try:
         # Vectorize + predict
         X_vec = vectorizer.transform([request.url])
-        prediction = model.predict(X_vec)[0]
+        prediction = model.predict(X_vec)[0].lower()
+        if prediction not in ["productive", "distractive"]:
+          prediction = "productive"  # safe default
+
 
         # Log into DB
         c.execute(

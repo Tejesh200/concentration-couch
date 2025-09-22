@@ -1,68 +1,51 @@
-let chart;
+let interval = null;
 
-async function fetchStats() {
-  try {
-    // Fetch stats (total + unique)
-    let res = await fetch("http://127.0.0.1:8000/stats");
-    let data = await res.json();
+function startTimer(endTime) {
+    const timerEl = document.getElementById("timer");
 
-    // Fill values
-    document.getElementById("productive-total").textContent =
-      data.total?.productive || 0;
-    document.getElementById("distracting-total").textContent =
-      data.total?.distracting || 0;
-    document.getElementById("productive-unique").textContent =
-      data.unique?.productive || 0;
-    document.getElementById("distracting-unique").textContent =
-      data.unique?.distracting || 0;
+    function updateTimer() {
+        const now = Date.now();
+        const remaining = endTime - now;
 
-    // Fetch analytics
-    let trendRes = await fetch("http://127.0.0.1:8000/analytics");
-    let trendData = await trendRes.json();
-
-    let labels = Object.keys(trendData);
-    let productive = labels.map((day) => trendData[day].productive);
-    let distracting = labels.map((day) => trendData[day].distracting);
-
-    if (chart) chart.destroy();
-    let ctx = document.getElementById("trendChart").getContext("2d");
-    chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: "Productive",
-            data: productive,
-            borderColor: "#22c55e",
-            backgroundColor: "rgba(34,197,94,0.2)",
-            fill: true,
-            tension: 0.3
-          },
-          {
-            label: "Distracting",
-            data: distracting,
-            borderColor: "#ef4444",
-            backgroundColor: "rgba(239,68,68,0.2)",
-            fill: true,
-            tension: 0.3
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: "bottom" }
-        },
-        scales: {
-          y: { beginAtZero: true }
+        if (remaining <= 0) {
+            clearInterval(interval);
+            interval = null;
+            timerEl.textContent = "00:00";
+            chrome.storage.local.remove("focusEnd");
+        } else {
+            const mins = Math.floor(remaining / 60000);
+            const secs = Math.floor((remaining % 60000) / 1000);
+            timerEl.textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
         }
-      }
-    });
-  } catch (err) {
-    console.error("Failed to fetch stats:", err);
-  }
+    }
+
+    if (interval) clearInterval(interval); // avoid multiple intervals
+    updateTimer(); 
+    interval = setInterval(updateTimer, 1000);
 }
 
-document.getElementById("refresh").addEventListener("click", fetchStats);
-fetchStats();
+// Start button
+document.getElementById("startBtn").addEventListener("click", () => {
+    const endTime = Date.now() + 25 * 60 * 1000; // 25 minutes
+    chrome.storage.local.set({ focusEnd: endTime }, () => {
+        startTimer(endTime);
+
+        // 👉 Tell background to check active tab immediately
+        chrome.runtime.sendMessage({ action: "checkNow" });
+    });
+});
+
+// ✅ Stop button
+document.getElementById("stopBtn").addEventListener("click", () => {
+    if (interval) clearInterval(interval);
+    interval = null;
+    document.getElementById("timer").textContent = "25:00";
+    chrome.storage.local.remove("focusEnd");
+});
+
+// Resume if session already active
+chrome.storage.local.get("focusEnd", (data) => {
+    if (data.focusEnd && Date.now() < data.focusEnd) {
+        startTimer(data.focusEnd);
+    }
+});
