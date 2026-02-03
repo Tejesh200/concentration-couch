@@ -52,6 +52,7 @@ def classify_url(request: UrlRequest):
           prediction = "productive"  # safe default
 
 
+
         # Log into DB
         c.execute(
             "INSERT INTO usage (url, classification, timestamp) VALUES (?, ?, ?)",
@@ -75,7 +76,23 @@ def get_stats():
     c.execute("SELECT classification, COUNT(DISTINCT url) FROM usage GROUP BY classification")
     unique = dict(c.fetchall())
 
-    return {"total": total, "unique": unique}
+    # Normalize classification names and create simple stats
+    productive_count = 0
+    distractive_count = 0
+    
+    for classification, count in total.items():
+        normalized = classification.lower() if classification else ""
+        if normalized in ["distractive", "distracting"]:
+            distractive_count += count
+        else:
+            productive_count += count
+
+    return {
+        "productive": productive_count,
+        "distractive": distractive_count,
+        "total": total,
+        "unique": unique
+    }
 @app.get("/analytics")
 def get_analytics():
     """

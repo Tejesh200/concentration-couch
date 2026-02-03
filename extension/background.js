@@ -24,17 +24,27 @@ async function checkCurrentTab(force = false) {
             "twitter.com",
             "tiktok.com",
             "reddit.com",
-            "netflix.com/in/",
             "primevideo.com",
             "hotstar.com",
             "discord.com",
-            "pinterest.com"
+            "pinterest.com",
+            "ae.bappamtv.com"
         ];
 
         if (blacklist.some(site => tab.url.includes(site))) {
             console.log("🚫 Blacklisted site — blocking:", tab.url);
+            // Log blacklisted site (call /classify to log it, even though we block it)
+            try {
+                await fetch("http://localhost:8000/classify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url: tab.url, title: tab.title || "" })
+                });
+            } catch (logErr) {
+                console.error("❌ Failed to log blacklisted site:", logErr);
+            }
             chrome.tabs.update(tab.id, { url: chrome.runtime.getURL("blocked.html") });
-            return; // skip backend
+            return; // skip further processing
         }
 
         // ✅ Step 2: ML model check
@@ -64,6 +74,7 @@ async function checkCurrentTab(force = false) {
 
         const cls = (result.classification || "").toLowerCase();
         console.log("🔎 Classification result for", tab.url, "=>", cls);
+        // Note: The /classify endpoint already logs the visit to the database
 
         if (cls === "distractive" || cls === "distracting") {
             console.log("🚫 Blocking tab via ML:", tab.url);

@@ -49,3 +49,29 @@ chrome.storage.local.get("focusEnd", (data) => {
         startTimer(data.focusEnd);
     }
 });
+
+// Function to fetch and display statistics
+async function loadStats() {
+    try {
+        const response = await fetch("http://localhost:8000/stats");
+        if (!response.ok) {
+            throw new Error("Failed to fetch stats");
+        }
+        const stats = await response.json();
+        
+        // Update UI with stats
+        document.getElementById("productiveCount").textContent = stats.productive || 0;
+        document.getElementById("distractiveCount").textContent = stats.distractive || 0;
+    } catch (err) {
+        console.error("Error loading stats:", err);
+        // Set defaults on error
+        document.getElementById("productiveCount").textContent = "0";
+        document.getElementById("distractiveCount").textContent = "0";
+    }
+}
+
+// Load stats when popup opens
+loadStats();
+
+// Refresh stats every 5 seconds
+setInterval(loadStats, 5000);

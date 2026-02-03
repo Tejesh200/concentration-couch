@@ -56,12 +56,24 @@ async def classify(req: ClassifyRequest):
     pred = clf.predict(X)[0]
 
     idx = list(clf.classes_).index(pred)
+    
+    # Log the visit to database
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO logs(user_id, url, label, score, action) VALUES(?, ?, ?, ?, ?)",
+        ("default_user", req.url, str(pred), float(prob[idx]), "visit")
+    )
+    conn.commit()
+    conn.close()
 
     return {
         "label": str(pred),
         "score": float(prob[idx]),
         "classes": list(clf.classes_),
+        "classification": str(pred),  # Add for compatibility with app.py format
     }
+
 
 
 @app.post("/log")
@@ -81,6 +93,37 @@ async def log(payload: dict):
     conn.commit()
     conn.close()
     return {"ok": True}
+
+
+@app.get("/stats")
+async def get_stats():
+    """
+    Returns statistics about website visits: counts of productive vs distractive visits
+    """
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    # Get total visit counts by classification
+    c.execute("SELECT label, COUNT(*) FROM logs WHERE label IS NOT NULL GROUP BY label")
+    rows = c.fetchall()
+    
+    stats = {}
+    for label, count in rows:
+        # Normalize label names
+        normalized_label = label.lower() if label else "unknown"
+        if normalized_label in ["distractive", "distracting"]:
+            stats["distractive"] = stats.get("distractive", 0) + count
+        else:
+            stats["productive"] = stats.get("productive", 0) + count
+    
+    # Ensure both keys exist
+    if "distractive" not in stats:
+        stats["distractive"] = 0
+    if "productive" not in stats:
+        stats["productive"] = 0
+    
+    conn.close()
+    return stats
 
 
 @app.get("/health")

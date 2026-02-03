@@ -2,28 +2,29 @@
 <html>
 <head>
   <title>Focus Session</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; width: 200px; }
-    #timer { font-size: 24px; margin: 10px 0; }
-    button {
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px;
-      background: #4CAF50;
-      color: white;
-      cursor: pointer;
-      margin: 5px;
-    }
-    #stopBtn {
-      background: #e53935; /* red button */
-    }
-  </style>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h3>Focus Mode</h3>
-  <div id="timer">25:00</div>
-  <button id="startBtn">Start Focus</button>
-  <button id="stopBtn">Stop</button>
+  <div class="container">
+    <h1>Focus Mode</h1>
+    <div id="timer">25:00</div>
+    <button id="startBtn">Start Focus</button>
+    <button id="stopBtn">Stop</button>
+
+    <!-- Statistics Section -->
+    <div class="stats-grid" style="margin-top: 20px;">
+      <div class="card productive">
+        <h2>Productive</h2>
+        <p id="productiveCount">0</p>
+        <p style="font-size: 12px; color: #666;">visits</p>
+      </div>
+      <div class="card distracting">
+        <h2>Distractive</h2>
+        <p id="distractiveCount">0</p>
+        <p style="font-size: 12px; color: #666;">visits</p>
+      </div>
+    </div>
+  </div>
 
   <script src="popup.js"></script>
 </body>
